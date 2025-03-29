@@ -9,4 +9,4 @@ Install guide:
 cabal run
 ```
 
-For windows it is recommended to use mingw haskell shell to install SDL2 and build the project.
+Windows SDL2 builds are bugged at the moment of writing this, please use wsl.
