@@ -21,20 +21,11 @@ module State
   , createTimerTicks
   ) where
 
-import System.Environment (getArgs)
-
-import qualified SDL
-import Linear (V4(..))
-import Control.Monad (unless)
-import qualified Data.IntMap.Strict as IM
-import qualified Data.ByteString as BS
 import qualified Data.Vector as V
 import qualified Data.Vector.Mutable as MV
 import Control.Monad.ST
 import Data.Word
-import Control.Monad (when, forM_)
-import Control.Monad.ST (runST)
-import Control.Monad.IO.Class
+import Control.Monad (forM_)
 
 type Memory = V.Vector Word8
 type MemoryWrite = (Int, Word8)

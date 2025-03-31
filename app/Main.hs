@@ -1,21 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
+    
 import System.Environment (getArgs)
-
 import SDL hiding (Timer)
-import Linear (V4(..))
-import Control.Monad (unless)
-import qualified Data.IntMap.Strict as IM
-import qualified Data.ByteString as BS
 import qualified Data.Vector as V
-import qualified Data.Vector.Mutable as MV
-import Control.Monad.ST
 import Data.Word
-import Control.Monad (when, forM_)
-import Control.Monad.ST (runST)
+import Control.Monad (when)
 import Control.Monad.IO.Class
 import System.CPUTime (getCPUTime, cpuTimePrecision)
 
+-- Internal Modules
 import State
 import DebugHelper
 import EventHelper
@@ -81,7 +75,6 @@ appLoop renderer timer mem = do
 
     let newMem = mem
 
-
-    when (eKeyDown events KeycodeQ) $ (print "yes")
+    when (eKeyDown events KeycodeQ) $ print "yes"
     if (eQuit events) then (print "quit the application") else (appLoop renderer newTimer newMem)
 

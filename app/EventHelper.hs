@@ -8,7 +8,8 @@ module EventHelper
   , eventIsQuit
   ) where
 
-import SDL
+import SDL  (Keycode, Keysym (keysymKeycode))
+import SDL.Event
 
 data MyEvents = MyEvents    { eQuit :: Bool
                             , eKeyDown :: Keycode -> Bool
