@@ -2,7 +2,7 @@
 module Main where
 import System.Environment (getArgs)
 
-import SDL
+import SDL hiding (Timer)
 import Linear (V4(..))
 import Control.Monad (unless)
 import qualified Data.IntMap.Strict as IM
@@ -17,6 +17,7 @@ import Control.Monad.IO.Class
 
 import State
 import DebugHelper
+import System.CPUTime (getCPUTime, cpuTimePrecision)
 
 
 -- main :: IO ()
@@ -66,8 +67,13 @@ main = do
                 { SDL.rendererType = SDL.AcceleratedRenderer
                 , SDL.rendererTargetTexture = False
                 }
+
     let mem = V.replicate 4096 0 :: Memory
-    appLoop renderer mem
+
+    cpuTimeNow <- liftIO getCPUTime
+    let timer = createTimerTicks 600 cpuTimeNow
+    
+    appLoop renderer timer mem
 
     SDL.destroyRenderer renderer
     SDL.destroyWindow window
@@ -125,8 +131,8 @@ eventIsQuit event = case eventPayload event of
     QuitEvent -> True
     _ -> False
 
-appLoop :: Renderer -> Memory -> IO()
-appLoop renderer mem = do
+appLoop :: Renderer -> Timer -> Memory -> IO()
+appLoop renderer timer mem = do
     sdlEvents <- SDL.pollEvents
     let events = parseEvents sdlEvents
 
@@ -137,8 +143,14 @@ appLoop renderer mem = do
 
     redrawScreen renderer exampleDisplayBuffer
 
+    cpuTimeNow <- liftIO getCPUTime
+
+    let newTimer = updateTimer timer cpuTimeNow
+
     let newMem = mem
 
+    print $ querryTimerSecs newTimer
+
     when (eKeyDown events KeycodeQ) $ (print "yes")
-    if (eQuit events) then (print "quit the application") else (appLoop renderer newMem)
+    if (eQuit events) then (print "quit the application") else (appLoop renderer newTimer newMem)
 
