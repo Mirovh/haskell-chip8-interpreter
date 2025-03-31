@@ -20,44 +20,8 @@ import State
 import DebugHelper
 import EventHelper
 
-
--- main :: IO ()
--- main = do
---   initializeAll
---   window <- createWindow "My SDL Application" defaultWindow
---   renderer <- createRenderer window (-1) defaultRenderer
---   appLoop renderer
---   destroyWindow window
-
--- appLoop :: Renderer -> IO ()
--- appLoop renderer = do
---   events <- pollEvents
---   let eventIsQPress event =
---         case eventPayload event of
---           KeyboardEvent keyboardEvent ->
---             keyboardEventKeyMotion keyboardEvent == Pressed &&
---             keysymKeycode (keyboardEventKeysym keyboardEvent) == KeycodeQ
---           _ -> False
---       qPressed = any eventIsQPress events
---   rendererDrawColor renderer $= V4 0 0 255 255
---   clear renderer
---   present renderer
---   unless qPressed (appLoop renderer)
-
--- how the ram works
--- ram is represented as a [word8]
-
 main :: IO ()
 main = do
-    -- let size = 4096
-    --     initialVec = V.replicate size 0  -- Initialize with all zeros
-    --     modifications = [(0, 255), (1024, 128), (2048, 64), (4095, 32)]  -- Some example changes
-
-    -- let modifiedVec = applyMemoryWrites initialVec modifications
-    -- print $ V.toList $ V.slice 0 10 modifiedVec  -- Print the first 10 elements
-    -- print $ V.toList $ V.slice 1020 10 modifiedVec  -- Print around index 1024
-    -- print $ V.toList $ V.slice 2045 10 modifiedVec  -- Print around index 2048
-    -- print $ V.toList $ V.slice 4095 1 modifiedVec  -- Print around index 4095
     initializeAll
     window <- createWindow "My SDL app" defaultWindow
     renderer <-
@@ -79,10 +43,6 @@ main = do
     SDL.destroyRenderer renderer
     SDL.destroyWindow window
     SDL.quit
-
-
-
-
 
 -- squareSize is the size (in pixels) of each cell. TODO: make dynamic to window size
 squareSize :: Int
@@ -108,27 +68,19 @@ redrawScreen renderer image = do
         ) image
     present renderer
 
-
-
 appLoop :: Renderer -> Timer -> Memory -> IO()
 appLoop renderer timer mem = do
     sdlEvents <- SDL.pollEvents
     let events = parseEvents sdlEvents
 
-    -- clear renderer
-    -- SDL.rendererDrawColor renderer $= V4 maxBound 0 0 maxBound
-    -- SDL.fillRect renderer $ Just $ SDL.Rectangle (P $ V2 100 100) $ V2 100 50
-    -- present renderer
-
     redrawScreen renderer exampleDisplayBuffer
 
     cpuTimeNow <- liftIO getCPUTime
-
     let newTimer = updateTimer timer cpuTimeNow
+    print $ querryTimerSecs newTimer
 
     let newMem = mem
 
-    print $ querryTimerSecs newTimer
 
     when (eKeyDown events KeycodeQ) $ (print "yes")
     if (eQuit events) then (print "quit the application") else (appLoop renderer newTimer newMem)
