@@ -71,10 +71,11 @@ appLoop renderer timer mem = do
 
     cpuTimeNow <- liftIO getCPUTime
     let newTimer = updateTimer timer cpuTimeNow
-    print $ querryTimerSecs newTimer
+    --print $ querryTimerSecs newTimer
 
     let newMem = mem
 
-    when (eKeyDown events KeycodeQ) $ print "yes"
+    when (eKeyDown events KeycodeQ) $ print "q down"
+    when (eKeyUp events KeycodeQ) $ print "q up"
     if (eQuit events) then (print "quit the application") else (appLoop renderer newTimer newMem)
 
