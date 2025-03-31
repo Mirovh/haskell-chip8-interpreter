@@ -80,4 +80,5 @@ executable haskell-chip8-interpreter
 
     other-modules:
         State,
-        DebugHelper
+        DebugHelper,
+        EventHelper

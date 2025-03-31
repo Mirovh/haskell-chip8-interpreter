@@ -14,10 +14,11 @@ import Data.Word
 import Control.Monad (when, forM_)
 import Control.Monad.ST (runST)
 import Control.Monad.IO.Class
+import System.CPUTime (getCPUTime, cpuTimePrecision)
 
 import State
 import DebugHelper
-import System.CPUTime (getCPUTime, cpuTimePrecision)
+import EventHelper
 
 
 -- main :: IO ()
@@ -81,10 +82,7 @@ main = do
 
 
 
-data MyEvents = MyEvents    { eQuit :: Bool
-                            , eKeyDown :: Keycode -> Bool
-                            , eKeyUp :: Keycode -> Bool
-                            }
+
 
 -- squareSize is the size (in pixels) of each cell. TODO: make dynamic to window size
 squareSize :: Int
@@ -110,26 +108,7 @@ redrawScreen renderer image = do
         ) image
     present renderer
 
-parseEvents :: [Event] -> MyEvents
-parseEvents events = MyEvents {
-    eQuit = any eventIsQuit events,
-    eKeyDown = keycodeStatusLookupFromEvents events Pressed,
-    eKeyUp = keycodeStatusLookupFromEvents events Released
-}
 
-keycodeStatusLookupFromEvents :: [Event] -> InputMotion -> Keycode -> Bool
-keycodeStatusLookupFromEvents events motion keycode =
-    any (\event -> case eventPayload event of
-                    KeyboardEvent keyboardEvent ->
-                        keyboardEventKeyMotion keyboardEvent == motion &&
-                        keysymKeycode (keyboardEventKeysym keyboardEvent) == keycode
-                    _ -> False
-        ) events
-
-eventIsQuit :: Event -> Bool
-eventIsQuit event = case eventPayload event of
-    QuitEvent -> True
-    _ -> False
 
 appLoop :: Renderer -> Timer -> Memory -> IO()
 appLoop renderer timer mem = do
