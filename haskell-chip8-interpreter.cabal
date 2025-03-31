@@ -67,7 +67,10 @@ executable haskell-chip8-interpreter
     build-depends:    
         base ^>=4.17.2.1,
         sdl2 ^>=2.5.5.1,
-        linear ^>=1.23.1
+        linear ^>=1.23.1,
+        containers,
+        bytestring,
+        vector
 
     -- Directories containing source files.
     hs-source-dirs:   app
