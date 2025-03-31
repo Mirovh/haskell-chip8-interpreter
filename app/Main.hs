@@ -14,6 +14,7 @@ import Data.Word
 import Control.Monad (when, forM_)
 import Control.Monad.ST (runST)
 import Control.Monad.IO.Class
+import State
 
 
 -- main :: IO ()
@@ -42,18 +43,6 @@ import Control.Monad.IO.Class
 -- how the ram works
 -- ram is represented as a [word8]
 
-type Memory = V.Vector Word8
-type MemoryWrite = (Int, Word8)
-
--- this is not the best way to manage memory state because it requires a full copy (O(n))
--- but I write this program to learn haskell and by extension functional programming
--- not to learn how to write imperative code in haskell, so I try to keep things pure
-applyMemoryWrites :: Memory -> [MemoryWrite] -> Memory
-applyMemoryWrites mem writes = runST $ do
-    mutmem <- V.thaw mem
-    forM_ writes $ \(idx, val) -> MV.write mutmem idx val
-    V.freeze mutmem
-
 main :: IO ()
 main = do
     -- let size = 4096
@@ -75,9 +64,9 @@ main = do
                 { SDL.rendererType = SDL.AcceleratedRenderer
                 , SDL.rendererTargetTexture = False
                 }
-    let mem = V.replicate 4096 0
+    let mem = V.replicate 4096 0 :: Memory
     appLoop renderer mem
-    
+
     SDL.destroyRenderer renderer
     SDL.destroyWindow window
     SDL.quit
@@ -89,6 +78,30 @@ data MyEvents = MyEvents    { eQuit :: Bool
                             , eKeyUp :: Keycode -> Bool
                             }
 
+-- squareSize is the size (in pixels) of each cell. TODO: make dynamic to window size
+squareSize :: Int
+squareSize = 10
+
+redrawScreen :: Renderer -> DisplayBuffer -> IO ()
+redrawScreen renderer image = do
+    clear renderer
+    V.imapM_ (\y row ->
+        V.imapM_ (\x pixel -> do
+            let color = if pixel
+                            then V4 255 255 255 255  -- White for true
+                            else V4 0   0   0   255  -- Black for false
+                -- Create a rectangle at position (x * squareSize, y * squareSize)
+                rect = SDL.Rectangle (SDL.P (SDL.V2 (fromIntegral $ x * squareSize)
+                                                    (fromIntegral $ y * squareSize)))
+                                    (SDL.V2 (fromIntegral squareSize) (fromIntegral squareSize))
+            -- Set the draw color
+            SDL.rendererDrawColor renderer SDL.$= color
+            -- Draw the filled rectangle
+            SDL.fillRect renderer $ Just rect
+            ) row
+        ) image
+    present renderer
+
 parseEvents :: [Event] -> MyEvents
 parseEvents events = MyEvents {
     eQuit = any eventIsQuit events,
@@ -97,7 +110,7 @@ parseEvents events = MyEvents {
 }
 
 keycodeStatusLookupFromEvents :: [Event] -> InputMotion -> Keycode -> Bool
-keycodeStatusLookupFromEvents events motion keycode = 
+keycodeStatusLookupFromEvents events motion keycode =
     any (\event -> case eventPayload event of
                     KeyboardEvent keyboardEvent ->
                         keyboardEventKeyMotion keyboardEvent == motion &&
@@ -115,12 +128,20 @@ appLoop renderer mem = do
     sdlEvents <- SDL.pollEvents
     let events = parseEvents sdlEvents
 
-    clear renderer
-    SDL.rendererDrawColor renderer $= V4 maxBound 0 0 maxBound
-    SDL.fillRect renderer $ Just $ SDL.Rectangle (P $ V2 100 100) $ V2 100 50
-    present renderer
+    -- clear renderer
+    -- SDL.rendererDrawColor renderer $= V4 maxBound 0 0 maxBound
+    -- SDL.fillRect renderer $ Just $ SDL.Rectangle (P $ V2 100 100) $ V2 100 50
+    -- present renderer
+
+    redrawScreen renderer exampleDisplayBuffer
 
     let newMem = mem
 
     when (eKeyDown events KeycodeQ) $ (print "yes")
-    if (eQuit events) then (print "quit the application") else (appLoop renderer newMem) 
+    if (eQuit events) then (print "quit the application") else (appLoop renderer newMem)
+
+-- Example: A checkerboard pattern for a 64x32 grid.
+exampleDisplayBuffer :: DisplayBuffer
+exampleDisplayBuffer = V.generate 32 $ \y ->
+  V.generate 64 $ \x ->
+    even (x + y)

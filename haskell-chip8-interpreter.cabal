@@ -77,3 +77,6 @@ executable haskell-chip8-interpreter
 
     -- Base language which the package is written in.
     default-language: Haskell2010
+
+    other-modules:
+        State
