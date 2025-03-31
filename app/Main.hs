@@ -64,7 +64,7 @@ main = do
     -- print $ V.toList $ V.slice 0 10 modifiedVec  -- Print the first 10 elements
     -- print $ V.toList $ V.slice 1020 10 modifiedVec  -- Print around index 1024
     -- print $ V.toList $ V.slice 2045 10 modifiedVec  -- Print around index 2048
-    -- print $ V.toList $ V.slice 4086 10 modifiedVec  -- Print around index 4095
+    -- print $ V.toList $ V.slice 4095 1 modifiedVec  -- Print around index 4095
     initializeAll
     window <- createWindow "My SDL app" defaultWindow
     renderer <-
@@ -92,8 +92,8 @@ data MyEvents = MyEvents    { eQuit :: Bool
 parseEvents :: [Event] -> MyEvents
 parseEvents events = MyEvents {
     eQuit = any eventIsQuit events,
-    eKeyDown = keycodeStatusLookupFromEvents events Released,
-    eKeyUp = keycodeStatusLookupFromEvents events Pressed
+    eKeyDown = keycodeStatusLookupFromEvents events Pressed,
+    eKeyUp = keycodeStatusLookupFromEvents events Released
 }
 
 keycodeStatusLookupFromEvents :: [Event] -> InputMotion -> Keycode -> Bool
@@ -121,5 +121,6 @@ appLoop renderer mem = do
     present renderer
 
     let newMem = mem
+
     when (eKeyDown events KeycodeQ) $ (print "yes")
     if (eQuit events) then (print "quit the application") else (appLoop renderer newMem) 
