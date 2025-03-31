@@ -14,7 +14,9 @@ import Data.Word
 import Control.Monad (when, forM_)
 import Control.Monad.ST (runST)
 import Control.Monad.IO.Class
+
 import State
+import DebugHelper
 
 
 -- main :: IO ()
@@ -140,8 +142,3 @@ appLoop renderer mem = do
     when (eKeyDown events KeycodeQ) $ (print "yes")
     if (eQuit events) then (print "quit the application") else (appLoop renderer newMem)
 
--- Example: A checkerboard pattern for a 64x32 grid.
-exampleDisplayBuffer :: DisplayBuffer
-exampleDisplayBuffer = V.generate 32 $ \y ->
-  V.generate 64 $ \x ->
-    even (x + y)
