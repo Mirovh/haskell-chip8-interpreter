@@ -35,6 +35,6 @@ jobs:
 
     - name: Install dependencies
       run: |
-        cabal update
+        cabal update && sudo apt-get install libsdl2-dev
     - name: Run tests
       run: cabal test all --test-show-details=direct
