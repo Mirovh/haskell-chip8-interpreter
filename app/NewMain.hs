@@ -3,7 +3,6 @@ module Main where
 
 import System.Environment (getArgs)
 import SDL hiding (Timer)
-import qualified Data.Vector as V
 import Control.Monad (when, forM_)
 import Control.Monad.IO.Class
 import System.CPUTime (getCPUTime, cpuTimePrecision)
@@ -14,7 +13,7 @@ import Data.Array.IO
 import NewState
 import DebugHelper
 import EventHelper
-import Data.Bits as B
+-- import Data.Bits as B
 
 main :: IO ()
 main = do
@@ -31,8 +30,8 @@ main = do
 
     mem <- newArray (0, 2095) 0 :: IO (IOUArray Int Word8)
     regs <- initRegisterBank
-    stack <- initStack
-    dpbuffer <- initDPBuffer 64 32
+    stk <- initStack
+    dbuf <- initDPBuffer 64 32
 
     cpuTimeNow <- liftIO getCPUTime
     initTimers regs cpuTimeNow
@@ -42,8 +41,8 @@ main = do
     appLoop renderer MkCPUState{
         memory = mem,
         registers = regs,
-        stack = stack,
-        dpbuffer = dpbuffer
+        stack = stk,
+        dpbuffer = dbuf
     }
 
     SDL.destroyRenderer renderer
@@ -81,29 +80,29 @@ drawPixel renderer (x,y) white = do
 
 appLoop :: Renderer -> CPUState -> IO ()
 appLoop renderer chipState = do
+    -- state
+    let mem = memory chipState
+    let regs = registers chipState
+    let stk = stack chipState
+    let dbuf = dpbuffer chipState
+
+    -- IO/events
     sdlEvents <- SDL.pollEvents
     let events = parseEvents sdlEvents
 
+    -- render
     dpb <- exampleDisplayBuffer
     redrawScreen renderer dpb
 
+    -- timers
     cpuTimeNow <- liftIO getCPUTime
     updateTimers (registers chipState) cpuTimeNow
-    readTimerTicks (registers chipState) (RTimer RDelayTimer) >>= print    
+    readTimerTicks regs (RTimer RDelayTimer) >>= print    
     --let newTimer = updateTimer timer cpuTimeNow
     --print $ querryTimerSecs newTimer
 
-    -- let newMem = mem
-
-
-
     --exec
 
-
-
-
-
-
-    when (eKeyDown events KeycodeQ) $ print "q down"
-    when (eKeyUp events KeycodeQ) $ print "q up"
-    if (eQuit events) then (print "quit the application") else (appLoop renderer chipState)
+    when (eKeyDown events KeycodeQ) $ putStrLn "q down"
+    when (eKeyUp events KeycodeQ) $ putStrLn "q up"
+    if eQuit events then putStrLn "quit the application" else appLoop renderer chipState
