@@ -19,12 +19,10 @@ module NewState
     , flipDpBufferMask
     ) where
 
-import System.IO
 import Data.Word (Word8, Word16) 
 import Data.Array.IO
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
-import Control.Monad
 import Data.IORef
 
 data RegisterId = RNumbered Int
@@ -60,23 +58,23 @@ initStack :: IO Stack
 initStack = newIORef []
 
 pushStack :: Stack -> Word16 -> IO ()
-pushStack stack item = modifyIORef stack (item:) --prepend item
+pushStack s item = modifyIORef s (item:) --prepend item
 
 popStack :: Stack -> IO Word16
-popStack stack = do
-    s <- readIORef stack
-    modifyIORef stack tail
-    if (length s > 0)
-        then return $ head s
+popStack s = do
+    l <- readIORef s
+    modifyIORef s tail
+    if not (null l)
+        then return $ head l
         else return 0
 
 initRegisterBank :: IO RegisterBank
 initRegisterBank = newIORef Map.empty
 
 getRegister :: RegisterBank -> RegisterId -> IO Register
-getRegister regs id = do
+getRegister regs regid = do
     regMap <- readIORef regs
-    return $ Map.findWithDefault (Register16 0) id regMap
+    return $ Map.findWithDefault (Register16 0) regid regMap
 
 regValue :: Register -> Integer
 regValue (Register8 w) = fromIntegral w
@@ -84,28 +82,28 @@ regValue (Register16 w) = fromIntegral w
 regValue (RegisterTimer { time = t }) = fromIntegral t
 
 readRegisterValue :: RegisterBank -> RegisterId -> IO Integer
-readRegisterValue regs id = do
-    reg <- getRegister regs id
+readRegisterValue regs regid = do
+    reg <- getRegister regs regid
     return (regValue reg)
 
 writeRegister :: RegisterBank -> RegisterId -> Register -> IO ()
-writeRegister regs id val = modifyIORef regs (Map.insert id val)
+writeRegister regs regid val = modifyIORef regs (Map.insert regid val)
 
-updateTimer :: Register -> Integer -> Register
-updateTimer reg@RegisterTimer{} cputime = RegisterTimer {
+updateTimer :: Integer -> Register -> Register
+updateTimer cputime reg@RegisterTimer{} = RegisterTimer {
     lastUpdate = cputime,
-    time = max 0 $ time reg - (cputime - (lastUpdate reg))
+    time = max 0 $ time reg - (cputime - lastUpdate reg)
 }
-updateTimer other _ = other
+updateTimer _ other = other
 
 updateTimers :: RegisterBank -> Integer -> IO ()
 updateTimers regs cputime = do
     regMap <- readIORef regs
-    let regMapUpdated = Map.map (\reg -> updateTimer reg cputime) regMap
+    let regMapUpdated = Map.map (updateTimer cputime) regMap
     writeIORef regs regMapUpdated
 
 initDPBuffer :: Int -> Int -> IO DisplayBuffer
-initDPBuffer width height = newArray ((0,0),((width-1),(height-1))) False
+initDPBuffer width height = newArray ((0,0),(width-1,height-1)) False
 
 -- mask contains all pixels that need to be flipped
 -- returns true if any pixel was flipped from on to off
@@ -131,16 +129,18 @@ initTimers regs cputime = do
     writeRegister regs (RTimer RSoundTimer) timer
 
 tickTimerUp :: RegisterBank -> RegisterId -> Integer -> IO ()
-tickTimerUp regs id@(RTimer _) ticks = do
-    timer <- getRegister regs id
-    writeRegister regs id RegisterTimer {
+tickTimerUp regs regid@(RTimer _) ticks = do
+    timer <- getRegister regs regid
+    writeRegister regs regid RegisterTimer {
         lastUpdate = lastUpdate timer,
         time = ticks * 1000000000000 `div` 60
     }
+tickTimerUp _ _ _ = error "RegisterId does not reference a timer"
 
 readTimerTicks :: RegisterBank -> RegisterId -> IO Integer
-readTimerTicks regs id@(RTimer _) =
-    (`div` 1000000000000) . (* 60) <$> readRegisterValue regs id
+readTimerTicks regs regid@(RTimer _) =
+    (`div` 1000000000000) . (* 60) <$> readRegisterValue regs regid
+readTimerTicks _ _ = error "RegisterId does not reference a timer"
 
 createTimerTicks :: Integer -> Integer -> Register
 createTimerTicks ticks cpuTime = RegisterTimer {
