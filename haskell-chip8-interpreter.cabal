@@ -55,7 +55,7 @@ executable haskell-chip8-interpreter
     import:           warnings
 
     -- .hs or .lhs file containing the Main module.
-    main-is:          Main.hs
+    main-is:          NewMain.hs
 
     -- Modules included in this executable, other than Main.
     -- other-modules:
@@ -79,6 +79,7 @@ executable haskell-chip8-interpreter
     default-language: Haskell2010
 
     other-modules:
+        NewState,
         State,
         DebugHelper,
         EventHelper
