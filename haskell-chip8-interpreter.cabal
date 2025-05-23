@@ -70,6 +70,7 @@ executable haskell-chip8-interpreter
         linear ^>=1.23.1,
         containers,
         bytestring,
+        array,
         vector
 
     -- Directories containing source files.

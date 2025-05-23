@@ -1,5 +1,6 @@
 module NewState
-    ( CPUState
+    ( CPUState(..)
+    , DisplayBuffer
     , initStack
     , pushStack
     , popStack
@@ -100,7 +101,7 @@ updateTimers regs cputime = do
     writeIORef regs regMapUpdated
 
 initDPBuffer :: Int -> Int -> IO DisplayBuffer
-initDPBuffer width height = newArray ((0,(width-1)),(0,(height-1))) False
+initDPBuffer width height = newArray ((0,0),((width-1),(height-1))) False
 
 -- mask contains all pixels that need to be flipped
 -- returns true if any pixel was flipped from on to off
