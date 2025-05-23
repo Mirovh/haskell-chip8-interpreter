@@ -1,6 +1,8 @@
 module NewState
     ( CPUState(..)
     , DisplayBuffer
+    , RegisterId(..)
+    , Timer(..)
     , initStack
     , pushStack
     , popStack
@@ -8,9 +10,11 @@ module NewState
     , getRegister
     , readRegisterValue
     , writeRegister
+    , initTimers
     , createTimerTicks
     , updateTimers
     , tickTimerUp
+    , readTimerTicks
     , initDPBuffer
     , flipDpBufferMask
     ) where
@@ -117,6 +121,15 @@ flipPixel b c = do
     writeArray b c (not p)
     return p
 
+initTimers :: RegisterBank -> Integer -> IO ()
+initTimers regs cputime = do
+    let timer = RegisterTimer {
+        lastUpdate = cputime,
+        time = 0
+    }
+    writeRegister regs (RTimer RDelayTimer) timer
+    writeRegister regs (RTimer RSoundTimer) timer
+
 tickTimerUp :: RegisterBank -> RegisterId -> Integer -> IO ()
 tickTimerUp regs id@(RTimer _) ticks = do
     timer <- getRegister regs id
@@ -124,6 +137,10 @@ tickTimerUp regs id@(RTimer _) ticks = do
         lastUpdate = lastUpdate timer,
         time = ticks * 1000000000000 `div` 60
     }
+
+readTimerTicks :: RegisterBank -> RegisterId -> IO Integer
+readTimerTicks regs id@(RTimer _) =
+    (`div` 1000000000000) . (* 60) <$> readRegisterValue regs id
 
 createTimerTicks :: Integer -> Integer -> Register
 createTimerTicks ticks cpuTime = RegisterTimer {

@@ -33,9 +33,10 @@ main = do
     regs <- initRegisterBank
     stack <- initStack
     dpbuffer <- initDPBuffer 64 32
-    
 
     cpuTimeNow <- liftIO getCPUTime
+    initTimers regs cpuTimeNow
+    tickTimerUp regs (RTimer RDelayTimer) 600
     -- let timer = createTimerTicks 600 cpuTimeNow
 
     appLoop renderer MkCPUState{
@@ -86,7 +87,9 @@ appLoop renderer chipState = do
     dpb <- exampleDisplayBuffer
     redrawScreen renderer dpb
 
-    --cpuTimeNow <- liftIO getCPUTime
+    cpuTimeNow <- liftIO getCPUTime
+    updateTimers (registers chipState) cpuTimeNow
+    readTimerTicks (registers chipState) (RTimer RDelayTimer) >>= print    
     --let newTimer = updateTimer timer cpuTimeNow
     --print $ querryTimerSecs newTimer
 
